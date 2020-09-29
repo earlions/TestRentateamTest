@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/bottombaritem_calls"
+        android:icon="@drawable/ic_launcher_background"
+        android:title="@string/title1"
+        app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/bottombaritem_recents"
+        android:icon="@drawable/ic_launcher_background"
+        android:title="@string/title2"
+        app:showAsAction="ifRoom"/>
+</menu>
