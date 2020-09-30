@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,6 +34,7 @@ import ru.onedr.earlzzz.testrentateam.recyclerview.Post;
 public class HomeFragment extends Fragment implements HomeView.View {
     private RecyclerView mRecyclerView;
     private TestResAdapter mAdapter;
+    private TextView mTextView;
     private List<Post> posts = new ArrayList<>();
     private ProgressBar progressBar;
 
@@ -52,12 +54,15 @@ public class HomeFragment extends Fragment implements HomeView.View {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home_list, container,
                 false);
-        PresenterLoadData presenterLoadData = new PresenterLoadData(this, getContext(), getActivity());
+        PresenterLoadData presenterLoadData = new PresenterLoadData(this, getContext());
         progressBar=view.findViewById(R.id.progressBar);
+        mTextView=view.findViewById(R.id.textViewError);
         mRecyclerView = view.findViewById(R.id.settings_recycler_view);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mRecyclerView.setNestedScrollingEnabled(false);
+        mAdapter = new TestResAdapter(posts);
         progressBar.setVisibility(View.VISIBLE);
+        mRecyclerView.setAdapter(mAdapter);
         presenterLoadData.onLoadBD();
         return view;
     }
@@ -69,13 +74,35 @@ public class HomeFragment extends Fragment implements HomeView.View {
     }
 
     @Override
-    public void showText(List<Post> posts) {
-        mAdapter = new TestResAdapter(posts);
-        mRecyclerView.setAdapter(mAdapter);
+    public void showData(List<Post> pos) {
+
+        posts.addAll(pos);
+        mRecyclerView.getAdapter().notifyDataSetChanged();
     }
 
     @Override
-    public void offLoad() {
+    public void showComplete() {
+        hideProgress();
+    }
+    @Override
+    public void showError(String textError) {
+        Handler handler = new Handler();
+        mTextView.setVisibility(View.VISIBLE);
+        hideProgress();
+        mTextView.setText(textError);
+        handler.postDelayed(() -> {
+            mTextView.setVisibility(View.GONE);
+        }, 800);
+
+
+    }
+
+    @Override
+    public void showProgress() {
+        progressBar.setVisibility(View.VISIBLE);
+    }
+    @Override
+    public void hideProgress() {
         progressBar.setVisibility(View.GONE);
     }
 

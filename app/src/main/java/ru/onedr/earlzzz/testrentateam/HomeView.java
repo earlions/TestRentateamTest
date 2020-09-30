@@ -6,8 +6,14 @@ import ru.onedr.earlzzz.testrentateam.recyclerview.Post;
 
 public interface HomeView {
     interface View {
-        void showText(List<Post> posts);
-        void offLoad();
+        void showData(List<Post> posts);
+        void showComplete();
+
+        void showError(String textError);
+
+        void showProgress();
+
+        void hideProgress();
     }
 
     interface Presenter {

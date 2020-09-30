@@ -27,21 +27,18 @@ public class PresenterLoadData implements HomeView.Presenter{
     private HomeView.View mView;
     private DBHelper dbHelper;
     private boolean internet;
+    final List<Post> mPostDB = new ArrayList<>();
+    final List<Post> mPost = new ArrayList<>();
 
-
-    public PresenterLoadData(HomeView.View mView, Context context, FragmentActivity fragmentActivity) {
+    public PresenterLoadData(HomeView.View mView, Context context) {
         this.mView = mView;
         this.dbHelper = new DBHelper(context);
-        ConnectivityManager cm = (ConnectivityManager) fragmentActivity.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        internet = netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     @Override
     public void onLoadBD() {
-        final List<Post> mPost = new ArrayList<>();
-        final List<Post> mPostDB = new ArrayList<>();
-        if (internet){
+
+
 
         NetworkService.getInstance()
                 .getJSONApi()
@@ -53,12 +50,12 @@ public class PresenterLoadData implements HomeView.Presenter{
 
                     @Override
                     public void onError(Throwable e) {
-
+                        onReadBDOffline();
                     }
 
                     @Override
                     public void onComplete() {
-                        mView.offLoad();
+                        onLoadBDOffline(mPost);
                     }
 
                     @Override
@@ -71,29 +68,86 @@ public class PresenterLoadData implements HomeView.Presenter{
                         JsonObject jsonObject;
                         int size=  js.getAsJsonArray("data").size();
                         for (int n=0;n<size;n++){
-                        jsonObject=js.getAsJsonArray("data").get(n).getAsJsonObject();
-                        long id =jsonObject.get("id").getAsLong();
-                        String firsName=jsonObject.get("first_name").getAsString();
-                        String lastName=jsonObject.get("last_name").getAsString();
-                        String email=jsonObject.get("email").getAsString();
-                        String avatarSrc=jsonObject.get("avatar").getAsString();
-                        Post post= new Post(id,firsName,lastName,email,avatarSrc);
-                        mPost.add(post);}
-                        if (dbHelper.getcount()==0)
-                            dbHelper.insertContact(mPost);
+                            jsonObject=js.getAsJsonArray("data").get(n).getAsJsonObject();
+                            long id =jsonObject.get("id").getAsLong();
+                            String firsName=jsonObject.get("first_name").getAsString();
+                            String lastName=jsonObject.get("last_name").getAsString();
+                            String email=jsonObject.get("email").getAsString();
+                            String avatarSrc=jsonObject.get("avatar").getAsString();
+                            Post post= new Post(id,firsName,lastName,email,avatarSrc);
+                            mPost.add(post);}
+                        mView.showData(mPost);
 
 
-                        mView.showText(mPost);
                     }
-                });}else
-        {
-            mPostDB.addAll(dbHelper.getData());
-            mView.offLoad();
-            mView.showText(mPostDB);
-        }
+                });
+
+    }
+    private void onReadBDOffline(){
+            new RepositoryImpl().getRead(dbHelper)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<List<Post>>() {
+                        @Override
+                        public void onSubscribe(Disposable d) {
+                        }
+
+                        @Override
+                        public void onNext(List<Post> posts) {
+                            if (posts!=null)
+                                mPostDB.addAll(posts);
+                            mView.showData(mPostDB);
+                            mView.showError("Нет подключения к сети");
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            e.printStackTrace();
+                            mView.showError("Ошибка при загрузки Базы данных");
+                        }
+
+                        @Override
+                        public void onComplete() {
+                            mView.showComplete();
+                        }
+                    });
+    }
+
+    private void onLoadBDOffline(List<Post> posts){
+        new RepositoryImpl().getWrite(dbHelper, posts)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer() {
+
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(Object o) {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        mView.showComplete();
+                    }
+                });
+
 
     }
 
 
 
 }
+
+
+
+
+
